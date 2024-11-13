@@ -1,0 +1,176 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubble Sort Application</title>
+    <style>
+        .container {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .box {
+            width: 50px;
+            height: 50px;
+            margin: 5px;
+            background-color: lightblue;
+            text-align: center;
+            line-height: 50px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .highlight {
+            background-color: lightgreen;
+        }
+        .error {
+            background-color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Bubble Sort Visualization - Drag and Drop</h1>
+    <div id="step-info">Initial Array: [7, 4, 3, 5, 9, 2]</div>
+    <div class="container" id="array-container">
+        <div class="box" draggable="true" id="box-0">7</div>
+        <div class="box" draggable="true" id="box-1">4</div>
+        <div class="box" draggable="true" id="box-2">3</div>
+        <div class="box" draggable="true" id="box-3">5</div>
+        <div class="box" draggable="true" id="box-4">9</div>
+        <div class="box" draggable="true" id="box-5">2</div>
+    </div>
+
+    <script>
+        // This array represents each stage of the sorting process.
+        let steps = [
+            [7, 4, 3, 5, 9, 2],  // Step 0 - Initial
+            [4, 7, 3, 5, 9, 2],  // Step 1
+            [4, 3, 7, 5, 9, 2],  // Step 2
+            [4, 3, 5, 7, 9, 2],  // Step 3
+            [4, 3, 5, 7, 2, 9],  // Step 4
+            [3, 4, 5, 7, 2, 9],  // Step 5
+            [3, 4, 5, 2, 7, 9],  // Step 6
+            [3, 4, 2, 5, 7, 9],  // Step 7
+            [3, 2, 4, 5, 7, 9],  // Step 8
+            [2, 3, 4, 5, 7, 9]   // Step 9 - Sorted
+        ];
+
+        let currentStep = 0;
+        let previousStepArray = [...steps[currentStep]];
+
+        const boxes = document.querySelectorAll('.box');
+        const container = document.getElementById('array-container');
+        const stepInfo = document.getElementById('step-info');
+
+        boxes.forEach(box => {
+            box.addEventListener('dragstart', dragStart);
+            box.addEventListener('dragover', dragOver);
+            box.addEventListener('drop', drop);
+        });
+
+        // Handles the start of dragging a box element.
+        function dragStart(e) {
+            e.dataTransfer.setData('text/plain', e.target.id);
+        }
+
+        function dragOver(e) {
+            e.preventDefault();
+        }
+
+        // Handles the drop action and swaps the elements if necessary.
+        function drop(e) {
+            e.preventDefault();
+            const draggedId = e.dataTransfer.getData('text');
+            const targetId = e.target.id;
+
+            const draggedElement = document.getElementById(draggedId);
+            const targetElement = document.getElementById(targetId);
+
+            // Highlight swapped elements as red
+            draggedElement.classList.add('error');
+            targetElement.classList.add('error');
+
+            setTimeout(() => {
+                // Swap elements
+                const draggedIndex = Array.from(container.children).indexOf(draggedElement);
+                const targetIndex = Array.from(container.children).indexOf(targetElement);
+
+                container.insertBefore(draggedElement, targetElement);
+                if (draggedIndex < targetIndex) {
+                    container.insertBefore(targetElement, draggedElement);
+                }
+
+                // Check the step to see if the array is sorted correctly.
+                checkStep();
+            }, 500);
+        }
+
+        // Checks if the current array matches the expected sorted step.
+        function checkStep() {
+            const currentArray = Array.from(container.children).map(box => parseInt(box.textContent));
+            const correctArray = steps[currentStep + 1];
+
+            if (arraysEqual(currentArray, correctArray)) {
+                previousStepArray = [...currentArray];
+                highlightCorrect();
+                currentStep++;
+                stepInfo.textContent = `Step ${currentStep} completed successfully!`;
+                if (currentStep === steps.length - 1) {
+                    stepInfo.textContent = 'Congratulations! The array is sorted.';
+                }
+            } else {
+                // Incorrect step
+                stepInfo.textContent = `Incorrect step. Please try again.`;
+                highlightError();
+                setTimeout(() => {
+                    resetToPreviousStep();
+                }, 1000);
+            }
+        }
+
+        function arraysEqual(arr1, arr2) {
+            return JSON.stringify(arr1) === JSON.stringify(arr2);
+        }
+
+        // Highlights the incorrect elements in red for a moment.
+        function highlightError() {
+            const draggedElement = document.querySelector('.error');
+            const targetElement = document.querySelector('.error:nth-child(2)');
+            setTimeout(() => {
+                draggedElement.classList.remove('error');
+                targetElement.classList.remove('error');
+            }, 1000);
+        }
+
+        // Highlights the swapped elements in green to indicate a successful step.
+        function highlightCorrect() {
+            const swappedElements = document.querySelectorAll('.error');
+            swappedElements.forEach(element => {
+                element.classList.remove('error');
+                element.classList.add('highlight');
+            });
+            setTimeout(() => {
+                swappedElements.forEach(element => {
+                    element.classList.remove('highlight');
+                });
+            }, 1000);
+        }
+
+        // Reverts to the previous step state when an incorrect action is taken.
+        function resetToPreviousStep() {
+            container.innerHTML = '';
+            previousStepArray.forEach((value, index) => {
+                const newBox = document.createElement('div');
+                newBox.classList.add('box');
+                newBox.draggable = true;
+                newBox.id = `box-${index}`;
+                newBox.textContent = value;
+                newBox.addEventListener('dragstart', dragStart);
+                newBox.addEventListener('dragover', dragOver);
+                newBox.addEventListener('drop', drop);
+                container.appendChild(newBox);
+            });
+        }
+    </script>
+</body>
+</html>
